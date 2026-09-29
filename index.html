@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#14231F">
+<title>My Money</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#EEF1EF;--ink:#14231F;--mut:#6B7A75;--card:#fff;--inc:#1F6B4F;--exp:#B4432F;--sav:#2B4C7E;--line:#D9DFDC}
+*{box-sizing:border-box}
+body{margin:0;font-family:Manrope,system-ui,sans-serif;background:var(--bg);color:var(--ink);padding-bottom:78px}
+[hidden]{display:none!important}
+.center{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;text-align:center}
+main{max-width:560px;margin:0 auto;padding:16px}
+h1{font-size:26px;margin:0}h2{font-size:15px;margin:22px 0 8px;color:var(--mut);font-weight:600}
+.hero{background:var(--ink);color:#fff;border-radius:18px;padding:22px}
+.hero small{opacity:.7}.hero .big{font-size:38px;font-weight:800;margin:4px 0 12px}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.card{background:var(--card);border-radius:14px;padding:14px;border:1px solid var(--line)}
+.card small{color:var(--mut);display:block}.card b{font-size:19px}
+.inc{color:var(--inc)}.exp{color:var(--exp)}.sav{color:var(--sav)}
+.item{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
+.item .l{flex:1;min-width:0}.item .l div{font-weight:600}.item .l small{color:var(--mut)}
+.item button{background:none;border:0;color:var(--mut);font-size:18px;padding:6px}
+.seg{display:flex;background:#fff;border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:14px}
+.seg button{flex:1;border:0;background:none;padding:10px 4px;border-radius:9px;font:inherit;font-weight:600;color:var(--mut)}
+.seg button.on{background:var(--ink);color:#fff}
+label{display:block;font-size:13px;font-weight:600;margin:12px 0 5px;color:var(--mut)}
+input,select{width:100%;padding:13px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff;color:var(--ink)}
+.btn{width:100%;margin-top:18px;padding:15px;border:0;border-radius:12px;background:var(--ink);color:#fff;font:inherit;font-weight:800;font-size:16px}
+.btn.alt{background:var(--sav)}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;border:0;background:none;padding:12px 0;font:inherit;font-size:13px;font-weight:600;color:var(--mut)}
+nav button.on{color:var(--ink);box-shadow:inset 0 3px 0 var(--ink)}
+.empty{color:var(--mut);text-align:center;padding:24px 0}
+.bar{height:8px;background:var(--line);border-radius:4px;margin-top:6px}.bar i{display:block;height:100%;background:var(--exp);border-radius:4px}
+#toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:20px;font-size:14px}
+a.out{color:var(--mut);font-size:13px}
+</style>
+</head>
+<body>
+
+<div id="login" class="center" hidden>
+  <h1>My Money</h1>
+  <p style="color:var(--mut);max-width:280px">Track income, expenses and locked savings. Sign in to see your data.</p>
+  <button class="btn" id="gbtn" style="max-width:280px">Sign in with Google</button>
+</div>
+
+<div id="app" hidden>
+<main>
+
+<section id="v-home">
+  <div class="hero"><small>Spendable balance</small><div class="big" id="h-bal">₹0</div>
+    <small>Locked savings: <b id="h-sav">₹0</b></small></div>
+  <h2>This month</h2>
+  <div class="row">
+    <div class="card"><small>Income</small><b class="inc" id="h-minc">₹0</b></div>
+    <div class="card"><small>Expense</small><b class="exp" id="h-mexp">₹0</b></div>
+  </div>
+  <h2>Recent entries</h2><div id="h-list"></div>
+  <p style="text-align:center"><a class="out" href="#" id="signout">Sign out</a></p>
+</section>
+
+<section id="v-add" hidden>
+  <div class="seg" id="typeseg">
+    <button data-t="expense" class="on">Expense</button><button data-t="income">Income</button>
+    <button data-t="saving">Saving</button><button data-t="opening">Opening</button>
+  </div>
+  <label>Amount (₹)</label><input id="f-amt" type="number" inputmode="decimal" placeholder="0">
+  <label>Date</label><input id="f-date" type="date">
+  <div id="f-catwrap"><label>Category</label><select id="f-cat"></select></div>
+  <div id="f-modewrap"><label>Paid by</label>
+    <select id="f-mode"><option>Cash</option><option>UPI</option><option>Card</option><option>Bank</option></select></div>
+  <label>Note (optional)</label><input id="f-note" placeholder="e.g. Petrol for delivery bike">
+  <p id="f-hint" style="color:var(--mut);font-size:13px"></p>
+  <button class="btn" id="f-save">Save entry</button>
+</section>
+
+<section id="v-sav" hidden>
+  <div class="hero" style="background:var(--sav)"><small>Locked savings (not spendable)</small><div class="big" id="s-tot">₹0</div></div>
+  <h2>Savings history</h2><div id="s-list"></div>
+  <p style="color:var(--mut);font-size:13px">To add savings, use Add → Saving. Savings are removed from your spendable balance.</p>
+</section>
+
+<section id="v-sum" hidden>
+  <label style="margin-top:0">Month</label><input type="month" id="m-pick">
+  <div class="row" style="margin-top:14px">
+    <div class="card"><small>Income</small><b class="inc" id="m-inc">₹0</b></div>
+    <div class="card"><small>Expense</small><b class="exp" id="m-exp">₹0</b></div>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <div class="card"><small>Saved</small><b class="sav" id="m-sav">₹0</b></div>
+    <div class="card"><small>Left this month</small><b id="m-left">₹0</b></div>
+  </div>
+  <h2>Expense by category</h2><div id="m-cats"></div>
+  <button class="btn" id="m-pdf">Download PDF summary</button>
+</section>
+
+</main>
+<nav id="nav">
+  <button data-v="home" class="on">Home</button><button data-v="add">Add</button>
+  <button data-v="sav">Savings</button><button data-v="sum">Summary</button>
+</nav>
+</div>
+<div id="toast" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {getFirestore,collection,addDoc,deleteDoc,doc,onSnapshot} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// ====== STEP 1: PASTE YOUR FIREBASE CONFIG HERE (replace the whole block) ======
+const firebaseConfig = {
+  apiKey: "AIzaSyD582SbfgNfV9vhXTNjcW2bTBnwlxL-gn8",
+  authDomain: "js-acount.firebaseapp.com",
+  projectId: "js-acount",
+  storageBucket: "js-acount.firebasestorage.app",
+  messagingSenderId: "906226530962",
+  appId: "G-MJWR41LNEM"
+};
+// ================================================================================
+
+const app=initializeApp(firebaseConfig), auth=getAuth(app), db=getFirestore(app);
+const $=id=>document.getElementById(id);
+const CATS=["Petrol","Food","Home","Business","Bills / Recharge","Medical","Shopping","Travel","EMI / Loan","Other"];
+const inr=n=>"₹"+Math.round(Number(n)).toLocaleString("en-IN");
+const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+let uid=null,entries=[],type="expense",unsub=null;
+
+$("f-cat").innerHTML=CATS.map(c=>`<option>${c}</option>`).join("");
+$("f-date").value=today();
+$("m-pick").value=today().slice(0,7);
+
+function toast(t){const e=$("toast");e.textContent=t;e.hidden=false;setTimeout(()=>e.hidden=true,2200)}
+const esc=s=>String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+// ---- login ----
+$("gbtn").onclick=async()=>{
+  const p=new GoogleAuthProvider();
+  try{await signInWithPopup(auth,p)}catch(e){
+    if(e.code==="auth/popup-blocked"||e.code==="auth/operation-not-supported-in-this-environment")signInWithRedirect(auth,p);
+    else toast("Login failed: "+e.code)}
+};
+$("signout").onclick=e=>{e.preventDefault();signOut(auth)};
+onAuthStateChanged(auth,u=>{
+  if(unsub){unsub();unsub=null}
+  if(u){uid=u.uid;$("login").hidden=true;$("app").hidden=false;
+    unsub=onSnapshot(collection(db,"users",uid,"entries"),s=>{
+      entries=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>b.date.localeCompare(a.date)||b.created-a.created);
+      render()},e=>toast("Cannot load data: "+e.code));
+  }else{uid=null;entries=[];$("app").hidden=true;$("login").hidden=false}
+});
+
+// ---- navigation ----
+$("nav").onclick=e=>{const v=e.target.dataset.v;if(!v)return;
+  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b===e.target));
+  ["home","add","sav","sum"].forEach(x=>$("v-"+x).hidden=x!==v);scrollTo(0,0)};
+
+// ---- add form ----
+const hints={expense:"Money you spent. Reduces your spendable balance.",income:"Money received. Adds to your spendable balance.",
+  saving:"Locked money. Removed from spendable balance and kept in Savings.",opening:"Your starting balance. Enter once when you begin."};
+function setType(t){type=t;
+  document.querySelectorAll("#typeseg button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
+  $("f-catwrap").hidden=$("f-modewrap").hidden=t!=="expense";$("f-hint").textContent=hints[t]}
+$("typeseg").onclick=e=>{if(e.target.dataset.t)setType(e.target.dataset.t)};setType("expense");
+$("f-save").onclick=async()=>{
+  const amt=parseFloat($("f-amt").value);
+  if(!(amt>0))return toast("Enter a valid amount");
+  if(!$("f-date").value)return toast("Choose a date");
+  const d={type,amount:amt,date:$("f-date").value,note:$("f-note").value.trim(),created:Date.now()};
+  if(type==="expense"){d.category=$("f-cat").value;d.mode=$("f-mode").value}
+  try{await addDoc(collection(db,"users",uid,"entries"),d);
+    $("f-amt").value="";$("f-note").value="";toast("Saved");
+    document.querySelector('nav [data-v="home"]').click()}catch(e){toast("Save failed: "+e.code)}
+};
+window.del=async(id,t)=>{
+  if(!confirm(t==="saving"?"Savings are locked. Delete this savings entry anyway?":"Delete this entry?"))return;
+  await deleteDoc(doc(db,"users",uid,"entries",id))};
+
+// ---- render ----
+const sum=(a,t)=>a.filter(e=>e.type===t).reduce((s,e)=>s+e.amount,0);
+function row(e){
+  const cls=e.type==="expense"?"exp":e.type==="saving"?"sav":"inc",sign=e.type==="expense"?"−":"+";
+  const title=e.type==="expense"?e.category:e.type==="income"?"Income":e.type==="saving"?"Saved":"Opening balance";
+  const sub=[e.date,e.mode,e.note].filter(Boolean).map(esc).join(" · ");
+  return `<div class="item"><div class="l"><div>${esc(title)}</div><small>${sub}</small></div>
+  <b class="${cls}">${sign}${inr(e.amount)}</b><button onclick="del('${e.id}','${e.type}')" aria-label="Delete">✕</button></div>`}
+function render(){
+  const bal=sum(entries,"opening")+sum(entries,"income")-sum(entries,"expense")-sum(entries,"saving");
+  $("h-bal").textContent=inr(bal);$("h-sav").textContent=inr(sum(entries,"saving"));
+  const ym=today().slice(0,7),me=entries.filter(e=>e.date.startsWith(ym));
+  $("h-minc").textContent=inr(sum(me,"income"));$("h-mexp").textContent=inr(sum(me,"expense"));
+  $("h-list").innerHTML=entries.slice(0,12).map(row).join("")||'<div class="empty">No entries yet. Tap Add and enter your opening balance.</div>';
+  const sv=entries.filter(e=>e.type==="saving");
+  $("s-tot").textContent=inr(sum(entries,"saving"));
+  $("s-list").innerHTML=sv.map(row).join("")||'<div class="empty">No savings yet.</div>';
+  renderMonth()}
+function monthData(){const m=$("m-pick").value,a=entries.filter(e=>e.date.startsWith(m)),cats={};
+  a.filter(e=>e.type==="expense").forEach(e=>cats[e.category]=(cats[e.category]||0)+e.amount);
+  return{m,a,inc:sum(a,"income"),exp:sum(a,"expense"),sav:sum(a,"saving"),cats}}
+function renderMonth(){const d=monthData();
+  $("m-inc").textContent=inr(d.inc);$("m-exp").textContent=inr(d.exp);$("m-sav").textContent=inr(d.sav);
+  $("m-left").textContent=inr(d.inc-d.exp-d.sav);
+  const max=Math.max(1,...Object.values(d.cats));
+  $("m-cats").innerHTML=Object.entries(d.cats).sort((a,b)=>b[1]-a[1]).map(([c,v])=>
+    `<div class="card" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between"><span>${esc(c)}</span><b>${inr(v)}</b></div><div class="bar"><i style="width:${v/max*100}%"></i></div></div>`).join("")
+    ||'<div class="empty">No expenses this month.</div>'}
+$("m-pick").onchange=renderMonth;
+
+// ---- PDF ----
+$("m-pdf").onclick=()=>{
+  const d=monthData(),P=n=>"Rs. "+Math.round(n).toLocaleString("en-IN"),{jsPDF}=window.jspdf,pdf=new jsPDF();
+  pdf.setFontSize(18);pdf.text("Monthly Summary - "+d.m,14,18);
+  pdf.autoTable({startY:26,head:[["Item","Amount"]],body:[["Total income",P(d.inc)],["Total expense",P(d.exp)],["Saved (locked)",P(d.sav)],["Left this month",P(d.inc-d.exp-d.sav)]],theme:"grid",headStyles:{fillColor:[20,35,31]}});
+  pdf.autoTable({head:[["Expense category","Amount"]],body:Object.entries(d.cats).sort((a,b)=>b[1]-a[1]).map(([c,v])=>[c,P(v)]),theme:"grid",headStyles:{fillColor:[180,67,47]}});
+  pdf.autoTable({head:[["Date","Type","Category","Paid by","Note","Amount"]],
+    body:d.a.slice().reverse().map(e=>[e.date,e.type,e.category||"",e.mode||"",e.note||"",P(e.amount)]),
+    styles:{fontSize:9},headStyles:{fillColor:[43,76,126]}});
+  pdf.save("expenses-"+d.m+".pdf")};
+</script>
+</body>
+</html>
